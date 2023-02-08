@@ -33,6 +33,7 @@ public class ActivityRecognitionLocationProvider extends AbstractLocationProvide
     private static final String TAG = ActivityRecognitionLocationProvider.class.getSimpleName();
     private static final String P_NAME = " com.marianhello.bgloc";
     private static final String DETECTED_ACTIVITY_UPDATE = P_NAME + ".DETECTED_ACTIVITY_UPDATE";
+    private static final int LONGEST_INTERVAL = 120000;
 
     private GoogleApiClient googleApiClient;
     private PendingIntent detectedActivitiesPI;
@@ -41,6 +42,7 @@ public class ActivityRecognitionLocationProvider extends AbstractLocationProvide
     private boolean isTracking = false;
     private boolean isWatchingActivity = false;
     private Location lastLocation;
+    private long lastLocationTime;
     private DetectedActivity lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 100);
 
     public ActivityRecognitionLocationProvider(Context context) {
@@ -104,6 +106,7 @@ public class ActivityRecognitionLocationProvider extends AbstractLocationProvide
         showDebugToast("acy:" + location.getAccuracy() + ",v:" + location.getSpeed());
 
         lastLocation = location;
+        lastLocationTime = System.currentTimeMillis();
         handleLocation(location);
     }
 
@@ -246,6 +249,10 @@ public class ActivityRecognitionLocationProvider extends AbstractLocationProvide
         @Override
         public void onReceive(Context context, Intent intent) {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+            if (result == null) {
+                logger.error("ActivityRecognitionResult is null");
+                return;
+            }
             ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
 
             //Find the activity with the highest percentage
@@ -255,7 +262,10 @@ public class ActivityRecognitionLocationProvider extends AbstractLocationProvide
 
             handleActivity(lastActivity);
 
-            if (lastActivity.getType() == DetectedActivity.STILL) {
+            if (lastLocationTime + LONGEST_INTERVAL < System.currentTimeMillis()) {
+                showDebugToast("Detected TIMEOUT Activity");
+                startTracking();
+            } else if (lastActivity.getType() == DetectedActivity.STILL) {
                 showDebugToast("Detected STILL Activity");
                 // stopTracking();
                 // we will delay stop tracking after position is found

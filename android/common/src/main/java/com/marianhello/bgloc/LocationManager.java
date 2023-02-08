@@ -7,8 +7,10 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.os.Build;
 import android.os.Looper;
 
+import java.util.ArrayList;
 import com.github.jparkie.promise.Promise;
 import com.github.jparkie.promise.Promises;
 import com.intentfilter.androidpermissions.PermissionManager;
@@ -22,11 +24,6 @@ import java.util.concurrent.TimeoutException;
 public class LocationManager {
     private Context mContext;
     private static LocationManager mLocationManager;
-
-    public static final String[] PERMISSIONS = {
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION
-    };
 
     private LocationManager(Context context) {
         mContext = context;
@@ -45,7 +42,13 @@ public class LocationManager {
         final Promise<Location> promise = Promises.promise();
 
         PermissionManager permissionManager = PermissionManager.getInstance(mContext);
-        permissionManager.checkPermissions(Arrays.asList(PERMISSIONS), new PermissionManager.PermissionRequestListener() {
+        ArrayList<String> permissions = new ArrayList<String>();
+        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        if (Build.VERSION.SDK_INT >= 29){
+            permissions.add(Manifest.permission.ACTIVITY_RECOGNITION);
+        }
+        permissionManager.checkPermissions(permissions, new PermissionManager.PermissionRequestListener() {
             @Override
             public void onPermissionGranted() {
                 try {
