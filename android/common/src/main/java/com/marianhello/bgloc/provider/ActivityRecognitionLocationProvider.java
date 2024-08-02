@@ -160,7 +160,7 @@ public class ActivityRecognitionLocationProvider extends AbstractLocationProvide
         } else if (googleApiClient.isConnected()) {
             if (isWatchingActivity) { return; }
             startTracking();
-            if (mConfig.getStopOnStillActivity() && activityRecognitionPermitted())) {
+            if (mConfig.getStopOnStillActivity() && activityRecognitionPermitted()) {
                 ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
                         googleApiClient,
                         mConfig.getActivitiesInterval(),
